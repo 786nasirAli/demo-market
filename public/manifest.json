@@ -1,0 +1,24 @@
+{
+  "name": "Demo Marketplace – Luxury Divan Beds",
+  "short_name": "DemoMarket",
+  "description": "Customise and order handcrafted divan beds with live dynamic pricing calculation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
