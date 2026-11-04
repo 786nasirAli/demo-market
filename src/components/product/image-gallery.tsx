@@ -88,6 +88,7 @@ export function ImageGallery({ images, selectedColour, productTitle }: ImageGall
           alt={currentImage.altText || productTitle}
           fill
           priority
+          unoptimized
           sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover transition-transform duration-500 group-hover:scale-102"
         />
@@ -147,6 +148,7 @@ export function ImageGallery({ images, selectedColour, productTitle }: ImageGall
                 src={img.url}
                 alt={img.altText || `Thumbnail ${idx + 1}`}
                 fill
+                unoptimized
                 sizes="80px"
                 className="object-cover"
               />
@@ -187,6 +189,7 @@ export function ImageGallery({ images, selectedColour, productTitle }: ImageGall
               src={currentImage.url}
               alt={currentImage.altText || productTitle}
               fill
+              unoptimized
               className="object-contain"
             />
           </div>
