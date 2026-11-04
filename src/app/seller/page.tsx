@@ -18,6 +18,7 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronDown,
+  Upload,
 } from 'lucide-react';
 
 export default function SellerDashboardPage() {
@@ -37,7 +38,9 @@ export default function SellerDashboardPage() {
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState('269.99');
   const [compareAtPrice, setCompareAtPrice] = useState('539.98');
-  const [imageUrl, setImageUrl] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
 
   // AI Feature State
   const [aiLoading, setAiLoading] = useState(false);
@@ -100,17 +103,71 @@ export default function SellerDashboardPage() {
       setDescription(prod.description);
       setBasePrice(String(prod.basePrice));
       setCompareAtPrice(String(prod.compareAtPrice));
-      setImageUrl(prod.images?.[0]?.url || '');
+      setGalleryImages(prod.images?.map((img) => img.url) || []);
     } else {
       setEditingProduct(null);
       setTitle('');
       setDescription('');
       setBasePrice('269.99');
       setCompareAtPrice('539.98');
-      setImageUrl('');
+      setGalleryImages([]);
     }
+    setUrlInput('');
     setAiNote(null);
     setIsModalOpen(true);
+  };
+
+  // Local File Upload Handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (galleryImages.length + files.length > 5) {
+      alert('You can upload a maximum of 5 images per product.');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const json = await res.json();
+        if (json.success && json.url) {
+          newUrls.push(json.url);
+        } else {
+          alert('Failed to upload file: ' + (json.error || 'Unknown error'));
+        }
+      }
+      setGalleryImages((prev) => [...prev, ...newUrls].slice(0, 5));
+    } catch (err: any) {
+      console.error('Upload error', err);
+      alert('Failed to upload image: ' + (err?.message || 'Network error'));
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleAddImageUrl = () => {
+    if (!urlInput.trim()) return;
+    if (galleryImages.length >= 5) {
+      alert('Maximum 5 images reached.');
+      return;
+    }
+    setGalleryImages((prev) => [...prev, urlInput.trim()].slice(0, 5));
+    setUrlInput('');
   };
 
   // AI Feature: Auto-generate title and rich description
@@ -170,6 +227,11 @@ export default function SellerDashboardPage() {
             description,
             basePrice: numericBase,
             compareAtPrice: numericCompare,
+            images: galleryImages.map((url, i) => ({
+              url,
+              altText: `${title} - View ${i + 1}`,
+              displayOrder: i + 1,
+            })),
           }),
         });
         const json = await res.json();
@@ -196,16 +258,22 @@ export default function SellerDashboardPage() {
             description: description || 'Handcrafted luxury divan bed with plush upholstered finish, deep foam padding, and reinforced solid timber base.',
             basePrice: numericBase,
             compareAtPrice: numericCompare,
-            images: [
-              {
-                url:
-                  imageUrl ||
-                  (isBlack
-                    ? 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=80'
-                    : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'),
-                altText: title,
-              },
-            ],
+            images:
+              galleryImages.length > 0
+                ? galleryImages.map((url, i) => ({
+                    url,
+                    altText: `${title} - View ${i + 1}`,
+                    displayOrder: i + 1,
+                  }))
+                : [
+                    {
+                      url: isBlack
+                        ? 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=80'
+                        : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+                      altText: title,
+                      displayOrder: 1,
+                    },
+                  ],
             variationGroups: [
               {
                 name: 'Colour',
@@ -561,18 +629,97 @@ export default function SellerDashboardPage() {
                   />
                 </div>
 
-                {!editingProduct && (
-                  <div>
-                    <label className="font-bold text-neutral-700 block mb-1">Primary Image URL</label>
-                    <input
-                      type="url"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 min-h-[44px]"
-                    />
+                {/* 5-Photo Gallery Manager (Local File Upload + URL support) */}
+                <div className="space-y-2 pt-2 border-t border-neutral-100">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-neutral-700 block">
+                      Product Photos &amp; Gallery (Max 5 Images)
+                    </label>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                      {galleryImages.length}/5 uploaded
+                    </span>
                   </div>
-                )}
+
+                  {/* Visual Grid of 5 Slots */}
+                  <div className="grid grid-cols-5 gap-2">
+                    {[0, 1, 2, 3, 4].map((slotIdx) => {
+                      const imgUrl = galleryImages[slotIdx];
+                      return (
+                        <div
+                          key={slotIdx}
+                          className="relative aspect-square rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 flex items-center justify-center overflow-hidden group shadow-2xs"
+                        >
+                          {imgUrl ? (
+                            <>
+                              <img
+                                src={imgUrl}
+                                alt={`Slot ${slotIdx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute top-1 left-1 bg-black/75 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-xs">
+                                #{slotIdx + 1}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(slotIdx)}
+                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer shadow-xs"
+                                title="Remove photo"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <div className="text-center p-1 text-neutral-400">
+                              <span className="block text-[10px] font-extrabold text-neutral-400">
+                                Slot {slotIdx + 1}
+                              </span>
+                              <span className="text-[9px] block text-neutral-400">
+                                {slotIdx === 0 ? 'Cover' : 'Gallery'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Upload Options: Local Computer File OR Image URL */}
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    {/* Local File Upload Button */}
+                    <label className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer min-h-[44px] transition-colors shadow-xs">
+                      <Upload className="w-4 h-4 text-emerald-400" />
+                      <span>{uploadingImage ? 'Uploading Photos...' : '📁 Upload from Computer'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        disabled={uploadingImage || galleryImages.length >= 5}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {/* URL Option */}
+                    <div className="flex-1 flex gap-1.5">
+                      <input
+                        type="url"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        placeholder="Or paste web image URL..."
+                        disabled={galleryImages.length >= 5}
+                        className="flex-1 px-3 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 min-h-[44px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddImageUrl}
+                        disabled={!urlInput.trim() || galleryImages.length >= 5}
+                        className="px-3 py-2 rounded-xl bg-neutral-200 hover:bg-neutral-300 disabled:opacity-50 text-neutral-800 text-xs font-bold cursor-pointer shrink-0 min-h-[44px]"
+                      >
+                        Add URL
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="pt-4 border-t border-neutral-100 flex justify-end gap-2">
                   <button

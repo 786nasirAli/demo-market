@@ -11,7 +11,7 @@ const createProductSchema = z.object({
   sellerId: z.string(),
   images: z.array(
     z.object({
-      url: z.string().url(),
+      url: z.string().min(1),
       altText: z.string().optional(),
       displayOrder: z.number().default(0),
       associatedColour: z.string().optional(),
