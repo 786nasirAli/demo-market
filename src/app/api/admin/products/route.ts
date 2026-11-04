@@ -10,7 +10,7 @@ const updateListingSchema = z.object({
 export async function GET() {
   try {
     // Admin gets all products regardless of status
-    const allProducts = await repository.getProducts({ status: undefined });
+    const allProducts = await repository.getProducts({ status: 'all' as any });
     return NextResponse.json({ success: true, data: allProducts });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

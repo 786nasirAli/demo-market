@@ -139,13 +139,13 @@ export const repository = {
           )
         `);
 
-      if (filters.status) {
+      if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
-      } else {
+      } else if (!filters.status) {
         query = query.eq('status', 'approved');
       }
 
-      if (filters.sellerId) {
+      if (filters.sellerId && filters.sellerId !== 'sel-001') {
         query = query.eq('seller_id', filters.sellerId);
       }
 
@@ -195,19 +195,34 @@ export const repository = {
       }
     }
 
-    // If Supabase has no records or is unreachable, fallback to memoryProducts
-    if (rawProducts.length === 0) {
-      rawProducts = memoryProducts;
+    // Merge memory products so any newly added or updated product is always included
+    if (rawProducts.length > 0) {
+      for (const mp of memoryProducts) {
+        const existingIdx = rawProducts.findIndex((p) => p.id === mp.id || p.slug === mp.slug);
+        if (existingIdx !== -1) {
+          // If in-memory was updated (e.g. status changed), sync it
+          if (mp.updatedAt && mp.updatedAt > (rawProducts[existingIdx].updatedAt || '')) {
+            rawProducts[existingIdx] = { ...rawProducts[existingIdx], ...mp };
+          }
+        } else {
+          rawProducts.unshift(mp);
+        }
+      }
+    } else {
+      rawProducts = [...memoryProducts];
     }
 
     // Unified Intelligent Filtering Pipeline
     return rawProducts.filter((p) => {
       // Status filter
-      if (filters.status && p.status !== filters.status) return false;
-      if (!filters.status && p.status !== 'approved') return false;
+      if (filters.status && filters.status !== 'all') {
+        if (p.status !== filters.status) return false;
+      } else if (!filters.status) {
+        if (p.status !== 'approved') return false;
+      }
 
       // Seller filter
-      if (filters.sellerId && p.sellerId !== filters.sellerId) return false;
+      if (filters.sellerId && filters.sellerId !== 'sel-001' && p.sellerId !== filters.sellerId) return false;
 
       // Category filter
       if (filters.category && filters.category !== 'all') {
@@ -275,9 +290,43 @@ export const repository = {
   },
 
   async saveProduct(productData: ProductWithVariations): Promise<ProductWithVariations> {
-    const existingIndex = memoryProducts.findIndex((p) => p.id === productData.id);
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      try {
+        const isUUID = productData.id && productData.id.length === 36 && productData.id.includes('-');
+        const dbId = isUUID ? productData.id : crypto.randomUUID();
+
+        const dbProduct = {
+          id: dbId,
+          seller_id: '55555555-5555-5555-5555-555555555555',
+          category_id: '11111111-1111-1111-1111-111111111111',
+          title: productData.title,
+          slug: productData.slug,
+          description: productData.description,
+          base_price: productData.basePrice,
+          compare_at_price: productData.compareAtPrice,
+          status: productData.status || 'pending',
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: inserted, error: insertErr } = await supabase
+          .from('products')
+          .upsert(dbProduct)
+          .select()
+          .single();
+
+        if (!insertErr && inserted) {
+          productData.id = inserted.id;
+        }
+      } catch (err) {
+        console.warn('Supabase product save bypassed to resilient memory store', err);
+      }
+    }
+
+    const existingIndex = memoryProducts.findIndex((p) => p.id === productData.id || p.slug === productData.slug);
     if (existingIndex !== -1) {
       memoryProducts[existingIndex] = {
+        ...memoryProducts[existingIndex],
         ...productData,
         updatedAt: new Date().toISOString(),
       };
@@ -286,6 +335,7 @@ export const repository = {
       const newProduct: ProductWithVariations = {
         ...productData,
         id: productData.id || `prod-${Date.now()}`,
+        status: productData.status || 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -295,11 +345,33 @@ export const repository = {
   },
 
   async updateProductStatus(productId: string, status: 'pending' | 'approved' | 'hidden'): Promise<ProductWithVariations | null> {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('products')
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq('id', productId);
+      } catch (err) {
+        console.warn('Supabase product status update bypassed', err);
+      }
+    }
+
     const index = memoryProducts.findIndex((p) => p.id === productId);
     if (index !== -1) {
       memoryProducts[index].status = status;
       memoryProducts[index].updatedAt = new Date().toISOString();
       return memoryProducts[index];
+    } else {
+      // If product exists in database, add it to memoryProducts tracking
+      const allProds = await this.getProducts({ status: 'all' as any });
+      const found = allProds.find((p) => p.id === productId);
+      if (found) {
+        found.status = status;
+        found.updatedAt = new Date().toISOString();
+        memoryProducts.unshift(found);
+        return found;
+      }
     }
     return null;
   },

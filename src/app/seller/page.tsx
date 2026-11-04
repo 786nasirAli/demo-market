@@ -47,8 +47,8 @@ export default function SellerDashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch products for seller
-      const resProducts = await fetch('/api/products?sellerId=sel-001&status=approved');
+      // Fetch products for seller (including pending and approved)
+      const resProducts = await fetch('/api/products?status=all');
       const prodJson = await resProducts.json();
       if (prodJson.success) {
         setProducts(prodJson.data);
@@ -183,6 +183,9 @@ export default function SellerDashboardPage() {
     } else {
       // Add new product
       try {
+        const isBlack = title.toLowerCase().includes('black');
+        const isGrey = title.toLowerCase().includes('grey');
+
         const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -190,14 +193,16 @@ export default function SellerDashboardPage() {
             sellerId: 'sel-001',
             categoryId: 'cat-001',
             title,
-            description,
+            description: description || 'Handcrafted luxury divan bed with plush upholstered finish, deep foam padding, and reinforced solid timber base.',
             basePrice: numericBase,
             compareAtPrice: numericCompare,
             images: [
               {
                 url:
                   imageUrl ||
-                  'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+                  (isBlack
+                    ? 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=80'
+                    : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'),
                 altText: title,
               },
             ],
@@ -207,8 +212,12 @@ export default function SellerDashboardPage() {
                 type: 'swatch',
                 isRequired: true,
                 options: [
-                  { label: 'Cream Naples', value: 'cream-naples', swatchHex: '#F5F2EB', extraPrice: 0, isDefault: true },
+                  { label: isBlack ? 'Black Naples' : isGrey ? 'Seal Grey Naples' : 'Cream Naples', value: isBlack ? 'black-naples' : isGrey ? 'seal-grey' : 'cream-naples', swatchHex: isBlack ? '#1C1C1E' : isGrey ? '#7D8184' : '#F5F2EB', extraPrice: 0, isDefault: true },
+                  { label: 'Cream Naples', value: 'cream-naples', swatchHex: '#F5F2EB', extraPrice: 0, isDefault: !isBlack && !isGrey },
                   { label: 'Seal Grey Naples', value: 'seal-grey', swatchHex: '#7D8184', extraPrice: 0, isDefault: false },
+                  { label: 'Black Naples', value: 'black-naples', swatchHex: '#1C1C1E', extraPrice: 0, isDefault: false },
+                  { label: 'Silver Plush', value: 'silver-plush', swatchHex: '#C2C4CC', extraPrice: 0, isDefault: false },
+                  { label: 'Coniston Blue', value: 'coniston-blue', swatchHex: '#2A455E', extraPrice: 0, isDefault: false },
                 ],
               },
               {
@@ -216,8 +225,23 @@ export default function SellerDashboardPage() {
                 type: 'radio',
                 isRequired: true,
                 options: [
-                  { label: 'Small Single 2FT6', value: 'sm-single', extraPrice: 90, isDefault: true },
-                  { label: 'Double 4FT6', value: 'double', extraPrice: 110, isDefault: false },
+                  { label: 'Small Single 2FT6', value: 'small-single-2ft6', extraPrice: 90, isDefault: true },
+                  { label: 'Single 3FT', value: 'single-3ft', extraPrice: 95, isDefault: false },
+                  { label: 'Small Double 4FT', value: 'small-double-4ft', extraPrice: 100, isDefault: false },
+                  { label: 'Double 4FT6', value: 'double-4ft6', extraPrice: 110, isDefault: false },
+                  { label: 'King 5FT', value: 'king-5ft', extraPrice: 125, isDefault: false },
+                  { label: 'Super King 6FT', value: 'super-king-6ft', extraPrice: 150, isDefault: false },
+                ],
+              },
+              {
+                name: 'Storage',
+                type: 'radio',
+                isRequired: true,
+                options: [
+                  { label: 'No Storage', value: 'no-storage', extraPrice: 0, isDefault: true },
+                  { label: '2 Drawers Left Side', value: '2-drawers-left', extraPrice: 50, isDefault: false },
+                  { label: '2 Drawers Right Side', value: '2-drawers-right', extraPrice: 45, isDefault: false },
+                  { label: '4 Drawers', value: '4-drawers', extraPrice: 210, isDefault: false },
                 ],
               },
             ],
@@ -227,10 +251,14 @@ export default function SellerDashboardPage() {
         const json = await res.json();
         if (json.success) {
           setIsModalOpen(false);
+          alert('✅ Bed listing created successfully!\n\nStatus: ⏳ Pending Admin Approval\n\nAb Admin Dashboard (/admin) par ja kar is listing ko "Approve" karein, to yeh Homepage par live ho jayegi!');
           loadData();
+        } else {
+          alert('❌ Failed to create product: ' + (json.error || 'Validation error'));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to create product', err);
+        alert('❌ Error creating product: ' + (err?.message || 'Network error'));
       }
     }
   };
@@ -311,8 +339,14 @@ export default function SellerDashboardPage() {
                     />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-emerald-700 uppercase bg-emerald-50 px-2 py-0.5 rounded-md inline-block mb-1">
-                      {prod.status}
+                    <span
+                      className={`text-xs font-bold uppercase px-2 py-0.5 rounded-md inline-block mb-1 ${
+                        prod.status === 'approved'
+                          ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                          : 'text-amber-700 bg-amber-50 border border-amber-200'
+                      }`}
+                    >
+                      {prod.status === 'approved' ? '✓ Live on Storefront' : '⏳ Pending Admin Approval'}
                     </span>
                     <h3 className="font-extrabold text-neutral-900 text-base">{prod.title}</h3>
                     <p className="text-xs text-neutral-500 mt-0.5">
