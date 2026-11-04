@@ -219,17 +219,12 @@ export const repository = {
         }
       }
 
-      // Search filter (matches title, description, category, or ANY variation option)
+      // Search filter (matches product title or description)
       if (filters.search && filters.search.trim() !== '') {
         const term = filters.search.toLowerCase().trim();
         const matchesTitle = p.title.toLowerCase().includes(term);
         const matchesDesc = p.description.toLowerCase().includes(term);
-        const matchesCat = p.category?.name?.toLowerCase().includes(term) || false;
-        const matchesOption = p.variationGroups.some((g) =>
-          g.options.some((o) => o.label.toLowerCase().includes(term) || o.value.toLowerCase().includes(term))
-        );
-
-        if (!matchesTitle && !matchesDesc && !matchesCat && !matchesOption) {
+        if (!matchesTitle && !matchesDesc) {
           return false;
         }
       }
@@ -238,16 +233,15 @@ export const repository = {
       if (filters.minPrice !== undefined && p.basePrice < filters.minPrice) return false;
       if (filters.maxPrice !== undefined && p.basePrice > filters.maxPrice) return false;
 
-      // Colour filter (matches label, value, or partial name, e.g. "Black" matches "Black Naples")
+      // Colour filter (matches specific product colour)
       if (filters.colour && filters.colour !== 'all') {
         const targetCol = filters.colour.toLowerCase().replace('naples', '').trim();
+        const matchesTitleColour = p.title.toLowerCase().includes(targetCol);
         const colourGroup = p.variationGroups.find((g) => g.name.toLowerCase() === 'colour');
-        const hasColour = colourGroup?.options.some((o) => {
-          const optLabel = o.label.toLowerCase();
-          const optVal = o.value.toLowerCase();
-          return optLabel.includes(targetCol) || optVal.includes(targetCol);
-        });
-        if (!hasColour) return false;
+        const defaultOpt = colourGroup?.options.find((o) => o.isDefault) || colourGroup?.options[0];
+        const matchesDefaultColour = defaultOpt?.label.toLowerCase().includes(targetCol) || false;
+
+        if (!matchesTitleColour && !matchesDefaultColour) return false;
       }
 
       // Size filter (matches label or value, e.g. "Double" matches "Double 4FT6")

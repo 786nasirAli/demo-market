@@ -266,3 +266,103 @@ VALUES
 INSERT INTO public.variation_options (group_id, label, value, extra_price, is_default, display_order)
 VALUES
   ('88888888-6666-6666-6666-666666666666', 'Professional Assembly', 'assembly', 39.99, false, 1);
+
+
+-- ============================================================
+-- ADDITIONAL SAMPLE BEDS FOR REALISTIC FILTER & PRICE TESTING
+-- ============================================================
+
+-- Product 2: Prague Divan Bed – Black Naples
+INSERT INTO public.products (id, seller_id, category_id, title, slug, description, base_price, compare_at_price, status)
+VALUES (
+  '66666666-6666-6666-6666-222222222222',
+  '55555555-5555-5555-5555-555555555555',
+  '11111111-1111-1111-1111-111111111111',
+  'Prague Divan Bed – Black Naples',
+  'prague-divan-bed-black-naples',
+  'The Prague Divan Bed in midnight Black Naples fabric delivers dramatic modern elegance. Featuring a grand tufted linear headboard, solid timber framing hand-built in the UK, and customisable storage options.',
+  319.99,
+  639.98,
+  'approved'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.product_images (id, product_id, url, alt_text, display_order, associated_colour)
+VALUES
+  ('77777777-2222-1111-1111-111111111111', '66666666-6666-6666-6666-222222222222', 'https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=1200&q=80', 'Prague Divan Bed – Black Naples', 1, 'Black Naples')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_groups (id, product_id, name, type, is_required, display_order)
+VALUES
+  ('88888888-2222-1111-1111-111111111111', '66666666-6666-6666-6666-222222222222', 'Colour', 'swatch', true, 1),
+  ('88888888-2222-2222-1111-111111111111', '66666666-6666-6666-6666-222222222222', 'Size', 'radio', true, 2)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_options (group_id, label, value, swatch_hex, extra_price, is_default, display_order)
+VALUES
+  ('88888888-2222-1111-1111-111111111111', 'Black Naples', 'black-naples', '#1C1C1E', 0.00, true, 1),
+  ('88888888-2222-2222-1111-111111111111', 'Double 4FT6', 'double-4ft6', null, 110.00, true, 1),
+  ('88888888-2222-2222-1111-111111111111', 'King 5FT', 'king-5ft', null, 125.00, false, 2)
+ON CONFLICT (id) DO NOTHING;
+
+-- Product 3: Prague Divan Bed – Seal Grey Naples
+INSERT INTO public.products (id, seller_id, category_id, title, slug, description, base_price, compare_at_price, status)
+VALUES (
+  '66666666-6666-6666-6666-333333333333',
+  '55555555-5555-5555-5555-555555555555',
+  '11111111-1111-1111-1111-111111111111',
+  'Prague Divan Bed – Seal Grey Naples',
+  'prague-divan-bed-seal-grey-naples',
+  'The Prague Divan Bed in Seal Grey Naples is a contemporary staple for understated modern luxury. Hand-tailored with premium textured Naples velvet weave and reinforced platform base.',
+  349.99,
+  699.98,
+  'approved'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.product_images (id, product_id, url, alt_text, display_order, associated_colour)
+VALUES
+  ('77777777-3333-1111-1111-111111111111', '66666666-6666-6666-6666-333333333333', 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80', 'Prague Divan Bed – Seal Grey Naples', 1, 'Seal Grey Naples')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_groups (id, product_id, name, type, is_required, display_order)
+VALUES
+  ('88888888-3333-1111-1111-111111111111', '66666666-6666-6666-6666-333333333333', 'Colour', 'swatch', true, 1),
+  ('88888888-3333-2222-1111-111111111111', '66666666-6666-6666-6666-333333333333', 'Size', 'radio', true, 2)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_options (group_id, label, value, swatch_hex, extra_price, is_default, display_order)
+VALUES
+  ('88888888-3333-1111-1111-111111111111', 'Seal Grey Naples', 'seal-grey-naples', '#7D8184', 0.00, true, 1),
+  ('88888888-3333-2222-1111-111111111111', 'King 5FT', 'king-5ft', null, 125.00, true, 1),
+  ('88888888-3333-2222-1111-111111111111', 'Super King 6FT', 'super-king-6ft', null, 150.00, false, 2)
+ON CONFLICT (id) DO NOTHING;
+
+-- Product 4: York Luxury Divan Bed – Slate Grey
+INSERT INTO public.products (id, seller_id, category_id, title, slug, description, base_price, compare_at_price, status)
+VALUES (
+  '66666666-6666-6666-6666-444444444444',
+  '55555555-5555-5555-5555-555555555555',
+  '11111111-1111-1111-1111-111111111111',
+  'York Luxury Divan Bed – Slate Grey',
+  'york-luxury-divan-bed-slate-grey',
+  'The York Luxury Divan Bed features deep fluted vertical tufting in architectural Slate Grey upholstery. Heavy-duty timber construction designed for lifetime support.',
+  429.99,
+  859.98,
+  'approved'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.product_images (id, product_id, url, alt_text, display_order, associated_colour)
+VALUES
+  ('77777777-4444-1111-1111-111111111111', '66666666-6666-6666-6666-444444444444', 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?auto=format&fit=crop&w=1200&q=80', 'York Luxury Divan Bed – Slate Grey', 1, 'Slate Grey Naples')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_groups (id, product_id, name, type, is_required, display_order)
+VALUES
+  ('88888888-4444-1111-1111-111111111111', '66666666-6666-6666-6666-444444444444', 'Colour', 'swatch', true, 1),
+  ('88888888-4444-2222-1111-111111111111', '66666666-6666-6666-6666-444444444444', 'Size', 'radio', true, 2)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.variation_options (group_id, label, value, swatch_hex, extra_price, is_default, display_order)
+VALUES
+  ('88888888-4444-1111-1111-111111111111', 'Slate Grey Naples', 'slate-grey-naples', '#4A4E51', 0.00, true, 1),
+  ('88888888-4444-2222-1111-111111111111', 'Super King 6FT', 'super-king-6ft', null, 150.00, true, 1)
+ON CONFLICT (id) DO NOTHING;
