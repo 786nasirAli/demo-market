@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductWithVariations } from '@/lib/types';
 import {
@@ -83,34 +85,75 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-50 pb-20">
       {/* Hero Banner */}
-      <section className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Official Reference Product Available</span>
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white py-12 lg:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Headline & Value Props */}
+          <div className="lg:col-span-7 space-y-5">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>Handcrafted British Divan Beds • 50% Off Spring Event</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
-              Handcrafted Divan Beds & Bespoke Bedroom Comfort
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Explore dynamic customisable beds with live price calculation. Choose custom Naples fabrics, storage drawers, floor-standing headboards, and white-glove assembly.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto text-xs">
-            <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10 flex items-center gap-2.5">
-              <Truck className="w-5 h-5 text-emerald-400 shrink-0" />
-              <div>
-                <span className="font-bold block">Free UK Delivery</span>
-                <span className="text-slate-300 text-[11px]">Direct to bedroom of choice</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
+              Handcrafted Luxury Divan Beds &amp; Bespoke Comfort
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+              Customise your dream bed down to the penny. Select premium Naples fabrics, drawer configurations, floor-standing headboards, and white-glove assembly with instant live price calculation.
+            </p>
+
+            {/* Quick Feature Badges */}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <div className="bg-white/10 backdrop-blur-xs px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2 text-xs">
+                <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-semibold text-slate-200">Free UK Room-of-Choice Delivery</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-xs px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2 text-xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-semibold text-slate-200">5-Year Structural Timber Guarantee</span>
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10 flex items-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-              <div>
-                <span className="font-bold block">5-Year Guarantee</span>
-                <span className="text-slate-300 text-[11px]">British timber craftsmanship</span>
+
+            {/* Action CTA Button */}
+            <div className="pt-2">
+              <Link
+                href="/products/prague-divan-bed-cream-naples"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs transition-all shadow-lg shadow-emerald-500/25 min-h-[44px] cursor-pointer"
+              >
+                <span>Customize Reference Prague Bed</span>
+                <span className="text-sm">→</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Hero Bed Showcase Image */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-black/50 aspect-4/3 sm:aspect-16/11 group">
+              <Image
+                src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
+                alt="Luxury Handcrafted Prague Divan Bed in Cream Naples"
+                fill
+                unoptimized
+                priority
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+
+              {/* Floating Highlight Card */}
+              <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 border border-white/50 shadow-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    Featured Model
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-black text-neutral-900 mt-1">
+                    Prague Divan Bed – Cream Naples
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">Includes FREE 26&quot; Luxury Headboard</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] line-through text-neutral-400 block font-semibold">£539.98</span>
+                  <span className="text-sm sm:text-base font-black text-neutral-900">From £269.99</span>
+                </div>
               </div>
             </div>
           </div>
