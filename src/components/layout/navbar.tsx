@@ -132,7 +132,7 @@ export function Navbar() {
 
           {/* Right Action Icons */}
           <div className="flex items-center gap-3">
-            {/* Seller / Admin Shortcuts */}
+            {/* Seller / Admin / Login Shortcuts */}
             <div className="hidden lg:flex items-center gap-2 border-r border-neutral-200 pr-3">
               <Link
                 href="/seller"
@@ -147,6 +147,13 @@ export function Navbar() {
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Admin
+              </Link>
+              <Link
+                href="/login"
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-neutral-100 text-neutral-800 hover:bg-neutral-200 flex items-center gap-1"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>{user ? user.fullName?.split(' ')[0] || 'Account' : 'Sign In'}</span>
               </Link>
             </div>
 
@@ -219,6 +226,14 @@ export function Navbar() {
           >
             <ShieldCheck className="w-4 h-4" />
             Admin Console
+          </Link>
+          <Link
+            href="/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2.5 rounded-lg text-base font-semibold text-neutral-800 bg-neutral-100 hover:bg-neutral-200 min-h-[44px] flex items-center gap-2"
+          >
+            <User className="w-4 h-4 text-emerald-600" />
+            <span>Sign In / Switch Account</span>
           </Link>
         </div>
       )}
