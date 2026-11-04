@@ -128,7 +128,7 @@ export default function HomePage() {
               placeholder="Search by bed title, Naples fabric, or storage option..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white rounded-xl border border-neutral-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
+              className="w-full pl-11 pr-4 py-3 bg-white text-neutral-900 font-medium placeholder:text-neutral-400 rounded-xl border border-neutral-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
             />
           </div>
 

@@ -520,7 +520,7 @@ export default function SellerDashboardPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Prague Divan Bed – Cream Naples"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                   />
                 </div>
 
@@ -533,7 +533,7 @@ export default function SellerDashboardPage() {
                       required
                       value={basePrice}
                       onChange={(e) => setBasePrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                     />
                   </div>
                   <div>
@@ -544,7 +544,7 @@ export default function SellerDashboardPage() {
                       required
                       value={compareAtPrice}
                       onChange={(e) => setCompareAtPrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                     />
                   </div>
                 </div>
@@ -557,7 +557,7 @@ export default function SellerDashboardPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Detailed craftsmanship and fabric specifications..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -569,7 +569,7 @@ export default function SellerDashboardPage() {
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 min-h-[44px]"
                     />
                   </div>
                 )}

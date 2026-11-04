@@ -227,7 +227,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                 />
               </div>
 
@@ -239,7 +239,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                 />
               </div>
 
@@ -251,7 +251,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.addressLine1}
                   onChange={handleInputChange}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export default function CheckoutPage() {
                     required
                     value={formData.city}
                     onChange={handleInputChange}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -275,7 +275,7 @@ export default function CheckoutPage() {
                     required
                     value={formData.postcode}
                     onChange={handleInputChange}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                   />
                 </div>
               </div>
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
                 />
               </div>
             </div>
