@@ -122,6 +122,8 @@ export const repository = {
 
   // --- PRODUCTS ---
   async getProducts(filters: ProductFilters = {}): Promise<ProductWithVariations[]> {
+    let rawProducts: ProductWithVariations[] = [];
+
     const supabase = await createServerSupabaseClient();
     if (supabase) {
       let query = supabase
@@ -147,13 +149,9 @@ export const repository = {
         query = query.eq('seller_id', filters.sellerId);
       }
 
-      if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
-      }
-
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        return data.map((p: any) => ({
+        rawProducts = data.map((p: any) => ({
           id: p.id,
           sellerId: p.seller_id,
           categoryId: p.category_id,
@@ -197,8 +195,13 @@ export const repository = {
       }
     }
 
-    // In-memory filtered evaluation
-    return memoryProducts.filter((p) => {
+    // If Supabase has no records or is unreachable, fallback to memoryProducts
+    if (rawProducts.length === 0) {
+      rawProducts = memoryProducts;
+    }
+
+    // Unified Intelligent Filtering Pipeline
+    return rawProducts.filter((p) => {
       // Status filter
       if (filters.status && p.status !== filters.status) return false;
       if (!filters.status && p.status !== 'approved') return false;
@@ -209,44 +212,60 @@ export const repository = {
       // Category filter
       if (filters.category && filters.category !== 'all') {
         const catSlug = p.category?.slug || '';
-        if (!catSlug.includes(filters.category) && p.category?.name !== filters.category) {
+        const catName = p.category?.name?.toLowerCase() || '';
+        const target = filters.category.toLowerCase();
+        if (!catSlug.includes(target) && !catName.includes(target)) {
           return false;
         }
       }
 
-      // Search filter
-      if (filters.search) {
-        const term = filters.search.toLowerCase();
+      // Search filter (matches title, description, category, or ANY variation option)
+      if (filters.search && filters.search.trim() !== '') {
+        const term = filters.search.toLowerCase().trim();
         const matchesTitle = p.title.toLowerCase().includes(term);
         const matchesDesc = p.description.toLowerCase().includes(term);
-        if (!matchesTitle && !matchesDesc) return false;
+        const matchesCat = p.category?.name?.toLowerCase().includes(term) || false;
+        const matchesOption = p.variationGroups.some((g) =>
+          g.options.some((o) => o.label.toLowerCase().includes(term) || o.value.toLowerCase().includes(term))
+        );
+
+        if (!matchesTitle && !matchesDesc && !matchesCat && !matchesOption) {
+          return false;
+        }
       }
 
       // Min / Max Price
       if (filters.minPrice !== undefined && p.basePrice < filters.minPrice) return false;
       if (filters.maxPrice !== undefined && p.basePrice > filters.maxPrice) return false;
 
-      // Colour filter
+      // Colour filter (matches label, value, or partial name, e.g. "Black" matches "Black Naples")
       if (filters.colour && filters.colour !== 'all') {
+        const targetCol = filters.colour.toLowerCase().replace('naples', '').trim();
         const colourGroup = p.variationGroups.find((g) => g.name.toLowerCase() === 'colour');
-        const hasColour = colourGroup?.options.some(
-          (o) => o.label.toLowerCase() === filters.colour?.toLowerCase() || o.value === filters.colour
-        );
+        const hasColour = colourGroup?.options.some((o) => {
+          const optLabel = o.label.toLowerCase();
+          const optVal = o.value.toLowerCase();
+          return optLabel.includes(targetCol) || optVal.includes(targetCol);
+        });
         if (!hasColour) return false;
       }
 
-      // Size filter
+      // Size filter (matches label or value, e.g. "Double" matches "Double 4FT6")
       if (filters.size && filters.size !== 'all') {
+        const targetSize = filters.size.toLowerCase().trim();
         const sizeGroup = p.variationGroups.find((g) => g.name.toLowerCase() === 'size');
-        const hasSize = sizeGroup?.options.some(
-          (o) => o.label.toLowerCase().includes(filters.size!.toLowerCase()) || o.value === filters.size
-        );
+        const hasSize = sizeGroup?.options.some((o) => {
+          const optLabel = o.label.toLowerCase();
+          const optVal = o.value.toLowerCase();
+          return optLabel.includes(targetSize) || optVal.includes(targetSize);
+        });
         if (!hasSize) return false;
       }
 
       return true;
     });
   },
+
 
   async getProductBySlug(slug: string): Promise<ProductWithVariations | null> {
     const products = await this.getProducts({ status: 'approved' });
