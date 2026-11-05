@@ -40,11 +40,21 @@ function ProductDetailContent({ slug }: { slug: string }) {
       try {
         const res = await fetch(`/api/products?status=approved`);
         const json = await res.json();
+        let match = null;
         if (json.success && json.data) {
-          const match = json.data.find(
+          match = json.data.find(
             (p: ProductWithVariations) => p.slug === slug || p.id === slug
           );
-          if (match) {
+        }
+
+        if (!match) {
+          try {
+            const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+            match = localItems.find((p: any) => p.slug === slug || p.id === slug) || null;
+          } catch (e) {}
+        }
+
+        if (match) {
             setProduct(match);
 
             // Initialize default options from the database

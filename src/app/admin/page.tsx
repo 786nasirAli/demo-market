@@ -35,7 +35,21 @@ export default function AdminPage() {
       const dataProducts = await resProducts.json();
 
       if (dataSellers.success) setSellers(dataSellers.data);
-      if (dataProducts.success) setProducts(dataProducts.data);
+      if (dataProducts.success) {
+        let prods = [...dataProducts.data];
+        try {
+          const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+          for (const itm of localItems) {
+            const idx = prods.findIndex((p: any) => p.id === itm.id || p.slug === itm.slug);
+            if (idx !== -1) {
+              prods[idx] = { ...prods[idx], ...itm };
+            } else {
+              prods.unshift(itm);
+            }
+          }
+        } catch (e) {}
+        setProducts(prods);
+      }
     } catch (err) {
       console.error('Failed to load admin data', err);
     } finally {
@@ -81,6 +95,13 @@ export default function AdminPage() {
         setProducts((prev) =>
           prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p))
         );
+        try {
+          const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+          const updatedLocal = localItems.map((p: any) =>
+            p.id === productId ? { ...p, status: newStatus } : p
+          );
+          localStorage.setItem('demo_local_products', JSON.stringify(updatedLocal));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error updating product listing', err);

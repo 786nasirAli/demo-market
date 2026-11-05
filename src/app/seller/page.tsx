@@ -53,9 +53,21 @@ export default function SellerDashboardPage() {
       // Fetch products for seller (including pending and approved)
       const resProducts = await fetch('/api/products?status=all');
       const prodJson = await resProducts.json();
-      if (prodJson.success) {
-        setProducts(prodJson.data);
-      }
+      let combined = prodJson.success ? prodJson.data : [];
+
+      try {
+        const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+        for (const itm of localItems) {
+          const idx = combined.findIndex((p: any) => p.id === itm.id || p.slug === itm.slug);
+          if (idx !== -1) {
+            combined[idx] = { ...combined[idx], ...itm };
+          } else {
+            combined.unshift(itm);
+          }
+        }
+      } catch (e) {}
+
+      setProducts(combined);
 
       // Fetch incoming orders
       const resOrders = await fetch('/api/orders?sellerId=sel-001');
@@ -318,6 +330,13 @@ export default function SellerDashboardPage() {
 
         const json = await res.json();
         if (json.success) {
+          if (json.data) {
+            try {
+              const saved = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+              saved.unshift(json.data);
+              localStorage.setItem('demo_local_products', JSON.stringify(saved));
+            } catch (e) {}
+          }
           setIsModalOpen(false);
           alert('✅ Bed listing created successfully!\n\nStatus: ⏳ Pending Admin Approval\n\nAb Admin Dashboard (/admin) par ja kar is listing ko "Approve" karein, to yeh Homepage par live ho jayegi!');
           loadData();

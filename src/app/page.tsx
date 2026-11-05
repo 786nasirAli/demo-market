@@ -56,7 +56,21 @@ export default function HomePage() {
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
       if (data.success) {
-        setProducts(data.data);
+        let list = [...data.data];
+        try {
+          const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+          for (const itm of localItems) {
+            if (itm.status === 'approved') {
+              const idx = list.findIndex((p: any) => p.id === itm.id || p.slug === itm.slug);
+              if (idx !== -1) {
+                list[idx] = { ...list[idx], ...itm };
+              } else {
+                list.unshift(itm);
+              }
+            }
+          }
+        } catch (e) {}
+        setProducts(list);
       }
     } catch (err) {
       console.error('Failed to load products', err);

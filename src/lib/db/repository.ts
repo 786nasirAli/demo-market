@@ -282,11 +282,13 @@ export const repository = {
     if (directMatch) return directMatch;
 
     // Check all products including pending/hidden for owner/preview
-    return memoryProducts.find((p) => p.slug === slug) || null;
+    const allProducts = await this.getProducts({ status: 'all' as any });
+    return allProducts.find((p) => p.slug === slug) || null;
   },
 
   async getProductById(id: string): Promise<ProductWithVariations | null> {
-    return memoryProducts.find((p) => p.id === id) || null;
+    const allProducts = await this.getProducts({ status: 'all' as any });
+    return allProducts.find((p) => p.id === id) || null;
   },
 
   async saveProduct(productData: ProductWithVariations): Promise<ProductWithVariations> {
@@ -296,10 +298,20 @@ export const repository = {
         const isUUID = productData.id && productData.id.length === 36 && productData.id.includes('-');
         const dbId = isUUID ? productData.id : crypto.randomUUID();
 
+        // Dynamically fetch first valid seller and category IDs from DB
+        let sellerId = '55555555-5555-5555-5555-555555555555';
+        let categoryId = '11111111-1111-1111-1111-111111111111';
+
+        const { data: selData } = await supabase.from('sellers').select('id').limit(1);
+        if (selData && selData.length > 0) sellerId = selData[0].id;
+
+        const { data: catData } = await supabase.from('categories').select('id').limit(1);
+        if (catData && catData.length > 0) categoryId = catData[0].id;
+
         const dbProduct = {
           id: dbId,
-          seller_id: '55555555-5555-5555-5555-555555555555',
-          category_id: '11111111-1111-1111-1111-111111111111',
+          seller_id: sellerId,
+          category_id: categoryId,
           title: productData.title,
           slug: productData.slug,
           description: productData.description,
@@ -317,6 +329,56 @@ export const repository = {
 
         if (!insertErr && inserted) {
           productData.id = inserted.id;
+
+          // 1. Insert product images into Supabase
+          if (productData.images && productData.images.length > 0) {
+            await supabase.from('product_images').delete().eq('product_id', inserted.id);
+
+            const imageRows = productData.images.map((img, i) => ({
+              id: crypto.randomUUID(),
+              product_id: inserted.id,
+              url: img.url,
+              alt_text: img.altText || productData.title,
+              display_order: img.displayOrder || i + 1,
+              associated_colour: img.associatedColour || null,
+            }));
+            await supabase.from('product_images').insert(imageRows);
+          }
+
+          // 2. Insert variation groups and options into Supabase
+          if (productData.variationGroups && productData.variationGroups.length > 0) {
+            await supabase.from('variation_groups').delete().eq('product_id', inserted.id);
+
+            for (const group of productData.variationGroups) {
+              const groupId = crypto.randomUUID();
+              const { data: insertedGroup, error: groupErr } = await supabase
+                .from('variation_groups')
+                .insert({
+                  id: groupId,
+                  product_id: inserted.id,
+                  name: group.name,
+                  type: group.type,
+                  is_required: group.isRequired ?? true,
+                  display_order: group.displayOrder ?? 0,
+                })
+                .select()
+                .single();
+
+              if (!groupErr && insertedGroup && group.options && group.options.length > 0) {
+                const optionRows = group.options.map((opt, optIdx) => ({
+                  id: crypto.randomUUID(),
+                  group_id: insertedGroup.id,
+                  label: opt.label,
+                  value: opt.value,
+                  swatch_hex: opt.swatchHex || null,
+                  extra_price: opt.extraPrice ?? 0,
+                  is_default: opt.isDefault ?? false,
+                  display_order: opt.displayOrder ?? optIdx + 1,
+                }));
+                await supabase.from('variation_options').insert(optionRows);
+              }
+            }
+          }
         }
       } catch (err) {
         console.warn('Supabase product save bypassed to resilient memory store', err);
