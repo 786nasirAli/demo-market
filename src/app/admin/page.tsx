@@ -63,46 +63,47 @@ export default function AdminPage() {
     }
   }, [role]);
 
-  // Handle seller approval or suspension
+  // Handle seller approval or suspension (Optimistic 0ms Instant UI)
   const handleUpdateSeller = async (sellerId: string, newStatus: 'approved' | 'suspended') => {
+    // 1. Instant optimistic update on screen
+    setSellers((prev) =>
+      prev.map((s) => (s.id === sellerId ? { ...s, status: newStatus } : s))
+    );
+
+    // 2. Background database sync
     try {
-      const res = await fetch('/api/admin/sellers', {
+      await fetch('/api/admin/sellers', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sellerId, status: newStatus }),
       });
-      const json = await res.json();
-      if (json.success) {
-        setSellers((prev) =>
-          prev.map((s) => (s.id === sellerId ? { ...s, status: newStatus } : s))
-        );
-      }
     } catch (err) {
       console.error('Error updating seller', err);
     }
   };
 
-  // Handle product approval or hiding
+  // Handle product approval or hiding (Optimistic 0ms Instant UI)
   const handleUpdateProduct = async (productId: string, newStatus: 'approved' | 'hidden') => {
+    // 1. Instant optimistic update on screen & localStorage
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p))
+    );
+
     try {
-      const res = await fetch('/api/admin/products', {
+      const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
+      const updatedLocal = localItems.map((p: any) =>
+        p.id === productId ? { ...p, status: newStatus } : p
+      );
+      localStorage.setItem('demo_local_products', JSON.stringify(updatedLocal));
+    } catch (e) {}
+
+    // 2. Background database sync
+    try {
+      await fetch('/api/admin/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, status: newStatus }),
       });
-      const json = await res.json();
-      if (json.success) {
-        setProducts((prev) =>
-          prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p))
-        );
-        try {
-          const localItems = JSON.parse(localStorage.getItem('demo_local_products') || '[]');
-          const updatedLocal = localItems.map((p: any) =>
-            p.id === productId ? { ...p, status: newStatus } : p
-          );
-          localStorage.setItem('demo_local_products', JSON.stringify(updatedLocal));
-        } catch (e) {}
-      }
     } catch (err) {
       console.error('Error updating product listing', err);
     }

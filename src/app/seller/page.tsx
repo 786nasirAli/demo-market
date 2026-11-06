@@ -42,6 +42,7 @@ export default function SellerDashboardPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [showBulkPaste, setShowBulkPaste] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // AI Feature State
   const [aiLoading, setAiLoading] = useState(false);
@@ -88,21 +89,20 @@ export default function SellerDashboardPage() {
   }, []);
 
   // Update order status (New -> Confirmed -> Shipped -> Delivered)
+  // 0ms Optimistic Order Status Update
   const handleUpdateStatus = async (orderId: string, itemId: string, newStatus: OrderStatus) => {
+    // 1. Instant optimistic update
+    setIncomingOrders((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
+    );
+
+    // 2. Background sync
     try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
+      await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId, status: newStatus }),
       });
-
-      const json = await res.json();
-      if (json.success) {
-        // Refresh local state
-        setIncomingOrders((prev) =>
-          prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
-        );
-      }
     } catch (err) {
       console.error('Failed to update status', err);
     }
@@ -845,9 +845,11 @@ export default function SellerDashboardPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold min-h-[44px]"
+                    disabled={isSaving}
+                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold min-h-[44px] flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    Save Changes
+                    {isSaving && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                    <span>{isSaving ? 'Saving Changes...' : (editingProduct ? 'Save Changes' : 'Create Bed Listing')}</span>
                   </button>
                 </div>
               </form>
