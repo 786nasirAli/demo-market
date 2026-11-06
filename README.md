@@ -10,6 +10,15 @@ Built as a technical assessment for **ESOLS Technologies**.
 
 This application implements a complete e-commerce slice modeled after the **Prague Divan Bed – Cream Naples** reference product. All option variations, add-ons, and prices are fully database-driven (configured by sellers in the database) and re-verified on the server before order persistence to prevent client-side price tampering.
 
+### System Design Architecture Diagram
+
+![Demo Market System Design Architecture](./public/system_architecture.svg)
+
+> **Architecture Diagram Assets:**
+> - Scalable Vector SVG: [`public/system_architecture.svg`](./public/system_architecture.svg)
+> - High-Res Diagram Render: [`public/system_architecture.jpg`](./public/system_architecture.jpg)
+> - Live URL: [https://demo-market-xtui.vercel.app/system_architecture.svg](https://demo-market-xtui.vercel.app/system_architecture.svg)
+
 ### Technology Stack
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions, Route Handlers)
 - **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
