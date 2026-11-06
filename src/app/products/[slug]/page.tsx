@@ -76,7 +76,6 @@ function ProductDetailContent({ slug }: { slug: string }) {
             });
             setSelectedOptions(defaults);
           }
-        }
       } catch (err) {
         console.error('Failed to load product', err);
       } finally {

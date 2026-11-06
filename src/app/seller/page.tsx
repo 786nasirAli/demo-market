@@ -38,9 +38,10 @@ export default function SellerDashboardPage() {
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState('269.99');
   const [compareAtPrice, setCompareAtPrice] = useState('539.98');
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [imageSlots, setImageSlots] = useState<string[]>(['', '', '', '', '']);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [showBulkPaste, setShowBulkPaste] = useState(false);
 
   // AI Feature State
   const [aiLoading, setAiLoading] = useState(false);
@@ -115,29 +116,73 @@ export default function SellerDashboardPage() {
       setDescription(prod.description);
       setBasePrice(String(prod.basePrice));
       setCompareAtPrice(String(prod.compareAtPrice));
-      setGalleryImages(prod.images?.map((img) => img.url) || []);
+      const urls = (prod.images || []).map((img) => img.url);
+      setImageSlots([
+        urls[0] || '',
+        urls[1] || '',
+        urls[2] || '',
+        urls[3] || '',
+        urls[4] || '',
+      ]);
     } else {
       setEditingProduct(null);
       setTitle('');
       setDescription('');
       setBasePrice('269.99');
       setCompareAtPrice('539.98');
-      setGalleryImages([]);
+      setImageSlots(['', '', '', '', '']);
     }
-    setUrlInput('');
+    setBulkUrls('');
+    setShowBulkPaste(false);
     setAiNote(null);
     setIsModalOpen(true);
+  };
+
+  const handleSlotUrlChange = (index: number, val: string) => {
+    setImageSlots((prev) => {
+      const copy = [...prev];
+      copy[index] = val;
+      return copy;
+    });
+  };
+
+  const handleClearSlot = (index: number) => {
+    setImageSlots((prev) => {
+      const copy = [...prev];
+      copy[index] = '';
+      return copy;
+    });
+  };
+
+  const handleApplyBulkUrls = () => {
+    if (!bulkUrls.trim()) return;
+    const parsed = bulkUrls
+      .split(/[\n,\s]+/)
+      .map((u) => u.trim())
+      .filter((u) => u.startsWith('http://') || u.startsWith('https://'));
+
+    if (parsed.length === 0) {
+      alert('No valid URLs found. Make sure URLs start with http:// or https://');
+      return;
+    }
+
+    setImageSlots((prev) => {
+      const updated = [...prev];
+      for (let i = 0; i < 5; i++) {
+        if (parsed[i]) {
+          updated[i] = parsed[i];
+        }
+      }
+      return updated;
+    });
+    setBulkUrls('');
+    setShowBulkPaste(false);
   };
 
   // Local File Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    if (galleryImages.length + files.length > 5) {
-      alert('You can upload a maximum of 5 images per product.');
-      return;
-    }
 
     setUploadingImage(true);
     try {
@@ -158,7 +203,19 @@ export default function SellerDashboardPage() {
           alert('Failed to upload file: ' + (json.error || 'Unknown error'));
         }
       }
-      setGalleryImages((prev) => [...prev, ...newUrls].slice(0, 5));
+      setImageSlots((prev) => {
+        const updated = [...prev];
+        let urlIdx = 0;
+        for (let i = 0; i < 5 && urlIdx < newUrls.length; i++) {
+          if (!updated[i]) {
+            updated[i] = newUrls[urlIdx++];
+          }
+        }
+        for (let i = 0; i < 5 && urlIdx < newUrls.length; i++) {
+          updated[i] = newUrls[urlIdx++];
+        }
+        return updated;
+      });
     } catch (err: any) {
       console.error('Upload error', err);
       alert('Failed to upload image: ' + (err?.message || 'Network error'));
@@ -166,20 +223,6 @@ export default function SellerDashboardPage() {
       setUploadingImage(false);
       e.target.value = '';
     }
-  };
-
-  const handleRemoveImage = (indexToRemove: number) => {
-    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
-
-  const handleAddImageUrl = () => {
-    if (!urlInput.trim()) return;
-    if (galleryImages.length >= 5) {
-      alert('Maximum 5 images reached.');
-      return;
-    }
-    setGalleryImages((prev) => [...prev, urlInput.trim()].slice(0, 5));
-    setUrlInput('');
   };
 
   // AI Feature: Auto-generate title and rich description
@@ -228,6 +271,27 @@ export default function SellerDashboardPage() {
       return;
     }
 
+    const isBlack = title.toLowerCase().includes('black');
+    const isGrey = title.toLowerCase().includes('grey');
+
+    const cleanedUrls = imageSlots.map((u) => u.trim()).filter((u) => u.length > 0);
+    const finalImages =
+      cleanedUrls.length > 0
+        ? cleanedUrls.map((url, i) => ({
+            url,
+            altText: `${title} - View ${i + 1}`,
+            displayOrder: i + 1,
+          }))
+        : [
+            {
+              url: isBlack
+                ? 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=80'
+                : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+              altText: title,
+              displayOrder: 1,
+            },
+          ];
+
     if (editingProduct) {
       // Update existing
       try {
@@ -239,11 +303,7 @@ export default function SellerDashboardPage() {
             description,
             basePrice: numericBase,
             compareAtPrice: numericCompare,
-            images: galleryImages.map((url, i) => ({
-              url,
-              altText: `${title} - View ${i + 1}`,
-              displayOrder: i + 1,
-            })),
+            images: finalImages,
           }),
         });
         const json = await res.json();
@@ -270,22 +330,7 @@ export default function SellerDashboardPage() {
             description: description || 'Handcrafted luxury divan bed with plush upholstered finish, deep foam padding, and reinforced solid timber base.',
             basePrice: numericBase,
             compareAtPrice: numericCompare,
-            images:
-              galleryImages.length > 0
-                ? galleryImages.map((url, i) => ({
-                    url,
-                    altText: `${title} - View ${i + 1}`,
-                    displayOrder: i + 1,
-                  }))
-                : [
-                    {
-                      url: isBlack
-                        ? 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=80'
-                        : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
-                      altText: title,
-                      displayOrder: 1,
-                    },
-                  ],
+            images: finalImages,
             variationGroups: [
               {
                 name: 'Colour',
@@ -648,95 +693,145 @@ export default function SellerDashboardPage() {
                   />
                 </div>
 
-                {/* 5-Photo Gallery Manager (Local File Upload + URL support) */}
-                <div className="space-y-2 pt-2 border-t border-neutral-100">
+                {/* 5-Photo Gallery Manager (Direct 5 Slots + Bulk Paste + Local Upload) */}
+                <div className="space-y-3 pt-3 border-t border-neutral-100">
                   <div className="flex items-center justify-between">
-                    <label className="font-bold text-neutral-700 block">
-                      Product Photos &amp; Gallery (Max 5 Images)
-                    </label>
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                      {galleryImages.length}/5 uploaded
+                    <div>
+                      <label className="font-extrabold text-neutral-900 block text-sm">
+                        Product Photos (Up to 5 Images)
+                      </label>
+                      <span className="text-[11px] text-neutral-500">
+                        Slot 1 is your Main Cover photo. Slots 2–5 form the interactive bedroom gallery.
+                      </span>
+                    </div>
+                    <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg">
+                      {imageSlots.filter((u) => u.trim().length > 0).length}/5 Added
                     </span>
                   </div>
 
-                  {/* Visual Grid of 5 Slots */}
-                  <div className="grid grid-cols-5 gap-2">
-                    {[0, 1, 2, 3, 4].map((slotIdx) => {
-                      const imgUrl = galleryImages[slotIdx];
-                      return (
-                        <div
-                          key={slotIdx}
-                          className="relative aspect-square rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 flex items-center justify-center overflow-hidden group shadow-2xs"
-                        >
-                          {imgUrl ? (
-                            <>
-                              <img
-                                src={imgUrl}
-                                alt={`Slot ${slotIdx + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute top-1 left-1 bg-black/75 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-xs">
-                                #{slotIdx + 1}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveImage(slotIdx)}
-                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer shadow-xs"
-                                title="Remove photo"
-                              >
-                                ✕
-                              </button>
-                            </>
-                          ) : (
-                            <div className="text-center p-1 text-neutral-400">
-                              <span className="block text-[10px] font-extrabold text-neutral-400">
-                                Slot {slotIdx + 1}
-                              </span>
-                              <span className="text-[9px] block text-neutral-400">
-                                {slotIdx === 0 ? 'Cover' : 'Gallery'}
-                              </span>
+                  {/* 5 Visual Preview Slots */}
+                  <div className="grid grid-cols-5 gap-2.5">
+                    {imageSlots.map((imgUrl, slotIdx) => (
+                      <div
+                        key={slotIdx}
+                        className="relative aspect-square rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50 flex items-center justify-center overflow-hidden group shadow-xs transition-all hover:border-neutral-400"
+                      >
+                        {imgUrl.trim() ? (
+                          <>
+                            <img
+                              src={imgUrl.trim()}
+                              alt={`Slot ${slotIdx + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.opacity = '0.3';
+                              }}
+                            />
+                            <div className="absolute top-1 left-1 bg-black/80 text-white text-[9px] font-black px-1.5 py-0.5 rounded-sm">
+                              #{slotIdx + 1} {slotIdx === 0 ? 'Cover' : ''}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            <button
+                              type="button"
+                              onClick={() => handleClearSlot(slotIdx)}
+                              className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer shadow-xs"
+                              title="Clear photo"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <div className="text-center p-1">
+                            <span className="block text-[11px] font-black text-neutral-400">
+                              #{slotIdx + 1}
+                            </span>
+                            <span className="text-[9px] font-semibold text-neutral-400 block">
+                              {slotIdx === 0 ? 'Main Cover' : 'Gallery Angle'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Upload Options: Local Computer File OR Image URL */}
-                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                    {/* Local File Upload Button */}
-                    <label className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer min-h-[44px] transition-colors shadow-xs">
+                  {/* Action Bar: Upload File OR Bulk Paste Toggle */}
+                  <div className="flex gap-2">
+                    <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer min-h-[42px] transition-colors shadow-xs">
                       <Upload className="w-4 h-4 text-emerald-400" />
-                      <span>{uploadingImage ? 'Uploading Photos...' : '📁 Upload from Computer'}</span>
+                      <span>{uploadingImage ? 'Uploading Photos...' : '📁 Upload Local Files'}</span>
                       <input
                         type="file"
                         accept="image/*"
                         multiple
-                        disabled={uploadingImage || galleryImages.length >= 5}
+                        disabled={uploadingImage}
                         onChange={handleFileUpload}
                         className="hidden"
                       />
                     </label>
 
-                    {/* URL Option */}
-                    <div className="flex-1 flex gap-1.5">
-                      <input
-                        type="url"
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                        placeholder="Or paste web image URL..."
-                        disabled={galleryImages.length >= 5}
-                        className="flex-1 px-3 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 min-h-[44px]"
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkPaste(!showBulkPaste)}
+                      className="px-3.5 py-2 rounded-xl border border-neutral-300 hover:bg-neutral-100 text-neutral-800 text-xs font-bold cursor-pointer min-h-[42px]"
+                    >
+                      {showBulkPaste ? 'Hide Bulk Paste' : '📋 Paste 5 URLs at Once'}
+                    </button>
+                  </div>
+
+                  {/* Bulk Paste Box (Optional Accordion) */}
+                  {showBulkPaste && (
+                    <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 space-y-2">
+                      <label className="text-[11px] font-bold text-neutral-700 block">
+                        Paste 1 to 5 image links (one per line or separated by commas):
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={bulkUrls}
+                        onChange={(e) => setBulkUrls(e.target.value)}
+                        placeholder="https://images.unsplash.com/photo-1...&#10;https://images.unsplash.com/photo-2...&#10;https://images.unsplash.com/photo-3..."
+                        className="w-full p-2.5 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 font-mono"
                       />
                       <button
                         type="button"
-                        onClick={handleAddImageUrl}
-                        disabled={!urlInput.trim() || galleryImages.length >= 5}
-                        className="px-3 py-2 rounded-xl bg-neutral-200 hover:bg-neutral-300 disabled:opacity-50 text-neutral-800 text-xs font-bold cursor-pointer shrink-0 min-h-[44px]"
+                        onClick={handleApplyBulkUrls}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
                       >
-                        Add URL
+                        Distribute to 5 Slots
                       </button>
                     </div>
+                  )}
+
+                  {/* 5 Direct URL Input Fields */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[11px] font-bold text-neutral-600 block">
+                      Direct Photo Links (Paste URLs directly below — auto-saved):
+                    </span>
+                    {[0, 1, 2, 3, 4].map((slotIdx) => (
+                      <div key={slotIdx} className="flex items-center gap-2">
+                        <span className="text-[11px] font-black text-neutral-500 w-16 shrink-0">
+                          {slotIdx === 0 ? 'Cover #1:' : `Photo #${slotIdx + 1}:`}
+                        </span>
+                        <input
+                          type="url"
+                          value={imageSlots[slotIdx]}
+                          onChange={(e) => handleSlotUrlChange(slotIdx, e.target.value)}
+                          placeholder={
+                            slotIdx === 0
+                              ? 'https://... (Primary cover photo)'
+                              : `https://... (Gallery angle #${slotIdx + 1})`
+                          }
+                          className="flex-1 px-3 py-2 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-emerald-500 min-h-[38px]"
+                        />
+                        {imageSlots[slotIdx] && (
+                          <button
+                            type="button"
+                            onClick={() => handleClearSlot(slotIdx)}
+                            className="text-neutral-400 hover:text-red-600 p-1 cursor-pointer font-bold"
+                            title="Clear"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
